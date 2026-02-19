@@ -7,9 +7,11 @@
 <style>
 *{box-sizing:border-box;font-family:system-ui;margin:0}
 body{background:#020617;color:#fff;padding:12px}
+
 .card{
   max-width:480px;margin:auto;background:#111827;
-  padding:16px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.5)
+  padding:16px;border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5)
 }
 h2{text-align:center;margin-bottom:10px}
 
@@ -27,6 +29,11 @@ input:focus{outline:2px solid #22c55e}
 }
 .big{grid-column:span 2;font-size:16px;padding:12px}
 
+/* Highlighted values */
+.profit{color:#facc15;font-weight:bold}   /* Yellow */
+.tax{color:#ef4444;font-weight:bold}      /* Red */
+.finalProfit{color:#22c55e;font-weight:bold} /* Green */
+
 .green{color:#22c55e;font-weight:bold}
 .red{color:#ef4444;font-weight:bold}
 </style>
@@ -34,63 +41,84 @@ input:focus{outline:2px solid #22c55e}
 
 <body>
 <div class="card">
-<h2>USDT → INR</h2>
+<h2>USDT → INR Profit</h2>
 
 <input id="inr" type="number" placeholder="INR Invested">
 <input id="usdt" type="number" placeholder="USDT Received">
 <input id="fee" type="number" placeholder="Transfer Fee (USDT)">
-<input id="rate" type="number" placeholder="Sell Rate ₹/USDT">
+<input id="rate" type="number" placeholder="Sell Rate ₹ / USDT">
 
 <div class="grid">
-<div class="box"><span>Buy Rate</span><span id="buyRate">₹0</span></div>
-<div class="box"><span>USDT Final</span><span id="fUSDT">0</span></div>
+<div class="box"><span>Real Buy Rate</span><span id="buyRate">₹0</span></div>
+<div class="box"><span>Final USDT</span><span id="fUSDT">0</span></div>
 
-<div class="box"><span>INR Sell</span><span id="fINR">₹0</span></div>
+<div class="box"><span>INR After Sell</span><span id="fINR">₹0</span></div>
 <div class="box"><span>ROI</span><span id="roi">0%</span></div>
 
-<div class="box"><span>Breakeven</span><span id="be">₹0</span></div>
-<div class="box"><span>Profit</span><span id="profit">₹0</span></div>
+<div class="box"><span>Break-even</span><span id="be">₹0</span></div>
+<div class="box profit"><span>Profit</span><span id="profit">₹0</span></div>
 
-<div class="box"><span>30% Tax</span><span id="tax">₹0</span></div>
-<div class="box big"><span>Final Profit</span><span id="final">₹0</span></div>
+<div class="box tax"><span>30% Tax</span><span id="tax">₹0</span></div>
+<div class="box big finalProfit"><span>Final Profit</span><span id="final">₹0</span></div>
 </div>
 </div>
 
 <script>
 ["inr","usdt","fee","rate"].forEach(id=>{
- document.getElementById(id).oninput=calc;
+ document.getElementById(id).addEventListener("input",calculate);
 });
 
-function v(id){return parseFloat(document.getElementById(id).value)||0}
-function set(id,val){document.getElementById(id).innerText=val}
-function color(el,val){el.className=val>=0?"green":"red"}
+function num(id){ return parseFloat(document.getElementById(id).value) || 0 }
+function set(id,val){ document.getElementById(id).innerText = val }
+function color(el,val){ el.className = val>=0 ? "green" : "red" }
 
-function calc(){
- let inr=v("inr"), usdt=v("usdt"), fee=v("fee"), rate=v("rate");
+function calculate(){
 
- let buyRate = usdt ? inr/usdt : 0;
- let finalUSDT=Math.max(usdt-fee,0);
- let inrSell=finalUSDT*rate;
- let roi=inr?((inrSell-inr)/inr)*100:0;
- let breakeven=finalUSDT?inr/finalUSDT:0;
- let profit=inrSell-inr;
- let tax=profit>0?profit*0.30:0;
- let finalProfit=profit-tax;
+let inrInvested = num("inr");
+let usdtReceived = num("usdt");
+let transferFee = num("fee");
+let sellRate = num("rate");
 
- set("buyRate","₹"+buyRate.toFixed(2));
- set("fUSDT",finalUSDT.toFixed(2));
- set("fINR","₹"+inrSell.toFixed(0));
- set("be","₹"+breakeven.toFixed(2));
- set("tax","₹"+tax.toFixed(0));
+// Final usable USDT
+let finalUSDT = Math.max(usdtReceived - transferFee, 0);
 
- let r=document.getElementById("roi");
- r.innerText=roi.toFixed(2)+"%"; color(r,roi);
+// Real buy price per usable USDT
+let realBuyRate = finalUSDT>0 ? inrInvested / finalUSDT : 0;
 
- let p=document.getElementById("profit");
- p.innerText="₹"+profit.toFixed(0); color(p,profit);
+// INR after selling
+let inrAfterSell = finalUSDT * sellRate;
 
- let f=document.getElementById("final");
- f.innerText="₹"+finalProfit.toFixed(0); color(f,finalProfit);
+// Profit before tax
+let profit = inrAfterSell - inrInvested;
+
+// Tax only if profit
+let tax = profit>0 ? profit * 0.30 : 0;
+
+// Final profit after tax
+let finalProfit = profit - tax;
+
+// ROI
+let roi = inrInvested>0 ? (finalProfit/inrInvested)*100 : 0;
+
+// Break-even sell rate
+let breakeven = realBuyRate;
+
+// Display
+set("buyRate","₹"+realBuyRate.toFixed(2));
+set("fUSDT",finalUSDT.toFixed(2));
+set("fINR","₹"+inrAfterSell.toFixed(0));
+set("be","₹"+breakeven.toFixed(2));
+set("tax","₹"+tax.toFixed(0));
+
+let r=document.getElementById("roi");
+r.innerText = roi.toFixed(2)+"%";
+color(r,roi);
+
+let p=document.getElementById("profit");
+p.innerText="₹"+profit.toFixed(0);
+
+let f=document.getElementById("final");
+f.innerText="₹"+finalProfit.toFixed(0);
 }
 </script>
 
