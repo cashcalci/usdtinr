@@ -42,11 +42,15 @@ input:focus{outline:2px solid #22c55e}
 <input id="rate" type="number" placeholder="Sell Rate ₹/USDT">
 
 <div class="grid">
+<div class="box"><span>Buy Rate</span><span id="buyRate">₹0</span></div>
 <div class="box"><span>USDT Final</span><span id="fUSDT">0</span></div>
+
 <div class="box"><span>INR Sell</span><span id="fINR">₹0</span></div>
 <div class="box"><span>ROI</span><span id="roi">0%</span></div>
+
 <div class="box"><span>Breakeven</span><span id="be">₹0</span></div>
 <div class="box"><span>Profit</span><span id="profit">₹0</span></div>
+
 <div class="box"><span>30% Tax</span><span id="tax">₹0</span></div>
 <div class="box big"><span>Final Profit</span><span id="final">₹0</span></div>
 </div>
@@ -63,6 +67,8 @@ function color(el,val){el.className=val>=0?"green":"red"}
 
 function calc(){
  let inr=v("inr"), usdt=v("usdt"), fee=v("fee"), rate=v("rate");
+
+ let buyRate = usdt ? inr/usdt : 0;
  let finalUSDT=Math.max(usdt-fee,0);
  let inrSell=finalUSDT*rate;
  let roi=inr?((inrSell-inr)/inr)*100:0;
@@ -71,6 +77,7 @@ function calc(){
  let tax=profit>0?profit*0.30:0;
  let finalProfit=profit-tax;
 
+ set("buyRate","₹"+buyRate.toFixed(2));
  set("fUSDT",finalUSDT.toFixed(2));
  set("fINR","₹"+inrSell.toFixed(0));
  set("be","₹"+breakeven.toFixed(2));
